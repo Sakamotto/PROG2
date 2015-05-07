@@ -252,21 +252,23 @@ def tokenizador(ptxt):
 				tokens.append(texto[posicao])
 		posicao+=1
 	
+	if strbuffer!='':
+		tokens.append(strbuffer)
+		
 	return tokens,lstposicoes
 
 
 
 def codifica(ptexto):
-	dicTipos = {0:['de','da','do','das','dos','ao','às','aos','à','dum','duma','duns','dumas','no','na','nos','nas','num','numa','nuns','numas','por','pelo','pela','pelos','pelas'],1:['o','a','os','as','um','uns','uma','umas'],3:'1234567890',2:['e','nem','mas também','como também','bem como','mas','porém','todavia','contudo','logo','portanto','por conseguinte','que','porque','porquanto','pois']} ; count=0
-	codigos = ['p','a','c','N','M','m']
+	dicTipos = {0:['de','da','do','das','dos','ao','às','aos','à','dum','duma','duns','dumas','no','na','nos','nas','num','numa','nuns','numas','por','pelo','pela','pelos','pelas'],1:['o','a','os','as','um','uns','uma','umas'],2:['e','nem','mas também','como também','bem como','mas','porém','todavia','contudo','logo','portanto','por conseguinte','que','porque','porquanto','pois']} ; count=0
+	codigos = ['p','a','c']
 	txtCodificado = ''
 	tokens=tokenizador(ptexto)[0]
-	dicTiposMm= {4:'QWERTYUIOPASDFGHJKLÇZXCVBNM',5:'qwertyuiopasdfghjklçzxcvbnm'}
 	numBuffer = ''
 	separador = True
 	chave = 0
 	
-
+	
 	if len(tokens)==0:
 		return ''
 	
@@ -280,16 +282,21 @@ def codifica(ptexto):
 			
 			chave+=1
 		
-		if i[0] in dicTipos[chave]:
-			txtCodificado += 'N'
-			separador = False
-		chave+=1
 		
-		while chave < 6 and separador == True:
-			if i[0] in dicTiposMm[chave]:
-				txtCodificado += codigos[chave]
+		if separador == True:
+			if i[0].isupper():
+				txtCodificado+='M'
 				separador = False
-			chave+=1
+			
+			else:
+				if i[0].islower():
+					txtCodificado+='m'
+					separador = False
+				else:
+					if i.isdigit():
+						txtCodificado+='N'
+						separador = False
+				
 		
 		if separador == True:
 			txtCodificado+=i
@@ -303,8 +310,10 @@ def Separadores(strTexto):
 	
 	for i in strTexto:
 		teste = i.isdigit() or i.isupper() or i.islower()
-		if not teste:
+		if not teste and i!='\n':
 			lstSeparadores+=i
+	
+	lstSeparadores+='º'+'ª'+'°'
 	
 	return lstSeparadores
 
@@ -315,26 +324,50 @@ def insereEspacos(strTexto):
 	
 	if len(strTexto)>0:
 		for caracter in strTexto:
-			if caracter not in separadores:
+			if caracter not in separadores and caracter!='\n':
 				newTexto+=caracter
 			else:
-				newTexto+=' '+caracter+' '
-			
+				if caracter!='\n':
+					newTexto+=' '+caracter+' '
+				else:
+					newTexto+=' '
 	return newTexto
 
 
-def extraiPadroes(plista):
-	lstPalavras = [] ; entidade = '' ; p = 0 ; indice = 0
+def extraiPadroes(listaT):
+	lstPalavras = [] ; entidade = '' ; p = 0 ; indice = 0 ; nGramas = [] ; p = 0
 	textoCodificado=''
 	listaP = ['MM','M','MMpM','N/N/N','MpM','MMM','MMMM','MMpMM','MpMM','MMMpM','MMMpMM','MMpMMM']
 	
-	listaT = plista[:]
+	
 	for i in listaT:
 		textoCodificado+=codifica(i)
-		print(codifica(i))
+
 	
-	print(textoCodificado)
-	a=input('Fim.')
+	indice = 6
+	while indice > 0 :
+		nGramas = n_grama(textoCodificado,indice)
+		p=0
+		for ng in nGramas:
+			if ng in listaP:
+				PalavraBuffer=''
+				n=p
+				for palavra in listaT[p:p+indice]:
+					PalavraBuffer+=palavra+' '
+					
+				if PalavraBuffer[0]!='*' and PalavraBuffer[:-1] not in lstPalavras:
+					lstPalavras.append(PalavraBuffer[:-1])
+				
+				n=p
+				while n < p+indice:
+					listaT[n]='*'
+					n+=1
+				
+			p+=1
+		
+		indice-=1
+		
+		
 	return lstPalavras
 
 
@@ -398,7 +431,6 @@ def geratabFreq02(arqE,arqS):
 	
 	PalavrasP = extraiPadroes(tokenizador(arquivo.read()))
 	
-	print(PalavrasP)
 	
 	
 	
@@ -422,14 +454,10 @@ def main():
 	
 	diretorio = '/home/danilo/Documentos/'
 	
-	'''geratabFreq02(diretorio+'arquivo1Original.txt',diretorio+'CopiaArquivo1.txt')
-	'''
-	arquivo = open(diretorio+'arquivo1Original.txt','rt')
-	arquivo.seek(0)
-	print(extraiPadroes(tokenizador(arquivo.read())[0]))
-	arquivo.close()
+	geratabFreq02(diretorio+'arquivo1.txt',diretorio+'CopiaArquivo1.txt')
+
 	
-	''''''
+
 	return 0
 
 if __name__ == '__main__':
