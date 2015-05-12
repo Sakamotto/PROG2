@@ -345,19 +345,23 @@ def extraiPadroes(listaT):
 		p=0
 		for ng in nGramas:
 			if ng in listaP:
-				PalavraBuffer=''
-				n=p
+				PalavraBuffer = ''
+				n = p
 				for palavra in listaT[p:p+indice]:
 					PalavraBuffer+=palavra+' '
-					
 				if PalavraBuffer[0]!='*' and PalavraBuffer[:-1] not in lstPalavras:
 					lstPalavras.append(PalavraBuffer[:-1])
-				
 				n=p
 				while n < p+indice:
 					listaT[n]='*'
 					n+=1
 			p+=1
+		
+		# Verificar se funcionou essa Mudança
+		textoCodificado = ''
+		for i in listaT:
+			textoCodificado+=codifica(i)
+
 		indice-=1
 		
 	return lstPalavras
