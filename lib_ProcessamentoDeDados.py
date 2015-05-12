@@ -8,8 +8,6 @@ Exercícios: Biblioteca_Processamento_de_TEXTO.
 
 '''
 
-
-
  
 def corrente(ptexto,pposicao):
 	separadores = ' ,.:!?;'
@@ -297,10 +295,8 @@ def codifica(ptexto):
 						txtCodificado+='N'
 						separador = False
 				
-		
 		if separador == True:
 			txtCodificado+=i
-		
 	
 	return txtCodificado
 
@@ -330,20 +326,19 @@ def insereEspacos(strTexto):
 				if caracter!='\n':
 					newTexto+=' '+caracter+' '
 				else:
-					newTexto+=' '
+					newTexto+='. '
 	return newTexto
 
 
 def extraiPadroes(listaT):
 	lstPalavras = [] ; entidade = '' ; p = 0 ; indice = 0 ; nGramas = [] ; p = 0
 	textoCodificado=''
-	listaP = ['MM','M','MMpM','N/N/N','MpM','MMM','MMMM','MMpMM','MpMM','MMMpM','MMMpMM','MMpMMM']
+	listaP = ['MM','M','MMpM','N/N/N','MpM','MMM','MMMM','MMpMM','MpMM','MMMpM','MMMpMM','MMpMMM','MpMMpM']
 	
 	
 	for i in listaT:
 		textoCodificado+=codifica(i)
 
-	
 	indice = 6
 	while indice > 0 :
 		nGramas = n_grama(textoCodificado,indice)
@@ -362,11 +357,8 @@ def extraiPadroes(listaT):
 				while n < p+indice:
 					listaT[n]='*'
 					n+=1
-				
 			p+=1
-		
 		indice-=1
-		
 		
 	return lstPalavras
 
@@ -389,7 +381,6 @@ def BDD_Separadores(arquivo):
 	
 	arq = open(arquivo,'rt')
 	separadores = open('/home/danilo/Documentos/Separadores.txt','wt')
-	
 	
 	for linha in arq.readlines():
 		for caracter in linha:
@@ -419,43 +410,75 @@ def separaPalavras2(ptexto,psep):
 	return palavras
 
 
-
-
 def geratabFreq02(arqE,arqS):
-	frequencia = {} ; PalavrasP = []
-	
+	frequencia = {} ; PalavrasP = [] ; freqEntidade = {} ; freqDP = {} ; parteEntidade=[]
 	diretorio = arqE
 	
 	arquivo = open(diretorio,'rt')
 	arqFreq = open(arqS,'wt')
 	
-	PalavrasP = extraiPadroes(tokenizador(arquivo.read()))
+	strtexto = arquivo.read()
+	
+	PalavrasP = extraiPadroes(tokenizador(strtexto)[0])
 	
 	
+	# Define frequencia de palavras padroes
+	for entidade in PalavrasP:
+		fatias = n_grama(strtexto,len(entidade))
+		
+		for fat in fatias:
+			
+			if fat.lower() == entidade.lower():
+				if entidade in freqEntidade:
+					freqEntidade[entidade]+=1
+				else:
+					freqEntidade[entidade]=1
+	# Fim 
+	
+	
+	# Define frequencia de demais palavras
+	lststopwords = stopwords()
+	for token in tokenizador(strtexto)[0]:
+		if token.isalpha() and token.lower() not in lststopwords:
+			if token in freqDP:
+				freqDP[token]+=1
+			else:
+				freqDP[token]=1
+	# Fim
+	
+	# Tratamento de repetição
+	for palavra in freqDP:
+		for entidade in freqEntidade:
+			if palavra in entidade.split():
+				freqDP[palavra]-=freqEntidade[entidade]
+				
 	
 	
 	arqFreq.close()
 	arquivo.close()
 	
-	
 	return 0
 
-
-def concatenaArq(lstArquivos,arqS):
+def stopwords():
+	stopwords=[]
 	
+	arquivo = open('/home/ifes/Documentos/Recursos/stopw.txt','rt')
 	
+	for i in arquivo.readlines():
+		stopwords.append(i[:-1])
 	
-	return 0
-
-
+	arquivo.close()
+	
+	return stopwords
 
 
 def main():
 	
-	diretorio = '/home/danilo/Documentos/'
+	diretorio = '/home/ifes/Documentos/'
+	diretorio2 = '/home/danilo/Documentos/'
 	
 	geratabFreq02(diretorio+'arquivo1.txt',diretorio+'CopiaArquivo1.txt')
-
+	
 	
 
 	return 0
