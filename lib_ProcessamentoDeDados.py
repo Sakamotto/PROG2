@@ -331,13 +331,17 @@ def insereEspacos(strTexto):
 
 
 def extraiPadroes(listaT):
-	lstPalavras = [] ; entidade = '' ; p = 0 ; indice = 0 ; nGramas = [] ; p = 0
+	lstPalavras = [] ; entidade = '' ; p = 0 ; indice = 0 ; nGramas = [] ; p = 0 ; lstPositions = []
 	textoCodificado=''
 	listaP = ['MM','M','MMpM','N/N/N','MpM','MMM','MMMM','MMpMM','MpMM','MMMpM','MMMpMM','MMpMMM','MpMMpM']
 	
 	
 	for i in listaT:
 		textoCodificado+=codifica(i)
+		lstPositions.append(p)
+		p+=1
+	
+	p=0
 
 	indice = 6
 	while indice > 0 :
@@ -349,10 +353,11 @@ def extraiPadroes(listaT):
 				n = p
 				for palavra in listaT[p:p+indice]:
 					PalavraBuffer+=palavra+' '
-				if PalavraBuffer[0]!='*' and PalavraBuffer[:-1] not in lstPalavras:
+				if PalavraBuffer[0]!='*':
 					lstPalavras.append(PalavraBuffer[:-1])
 				n=p
 				while n < p+indice:
+					lstPositions[n]='*'
 					listaT[n]='*'
 					n+=1
 			p+=1
@@ -363,8 +368,8 @@ def extraiPadroes(listaT):
 			textoCodificado+=codifica(i)
 
 		indice-=1
-		
-	return lstPalavras
+	
+	return lstPalavras,lstPositions
 
 
 # Manipulação de arquivos.
@@ -415,49 +420,55 @@ def separaPalavras2(ptexto,psep):
 
 
 def geratabFreq02(arqE,arqS):
-	frequencia = {} ; PalavrasP = [] ; freqEntidade = {} ; freqDP = {} ; parteEntidade=[]
-	diretorio = arqE
+	frequencia = {} ; PalavrasP = [] ; freqEntidade = {} ; freqDP = {} ; parteEntidade=[] ; p = 0
+	diretorio = arqE ; i = 0 ; mapPalavrasP = []
+	
 	
 	arquivo = open(diretorio,'rt')
 	arqFreq = open(arqS,'wt')
 	
 	strtexto = arquivo.read()
 	
-	PalavrasP = extraiPadroes(tokenizador(strtexto)[0])
+	PalavrasP = extraiPadroes(tokenizador(strtexto)[0])[0]
+	listaP = extraiPadroes(tokenizador(strtexto)[0])[1]
 	
+	tokens = tokenizador(strtexto)[0]
 	
-	# Define frequencia de palavras padroes
-	for entidade in PalavrasP:
-		fatias = n_grama(strtexto,len(entidade))
-		
-		for fat in fatias:
-			
-			if fat.lower() == entidade.lower():
-				if entidade in freqEntidade:
-					freqEntidade[entidade]+=1
-				else:
-					freqEntidade[entidade]=1
-	# Fim 
+	# Remove * da listaP
 	
+	while p < len(listaP):
+		if listaP[p]=='*':
+			mapPalavrasP.append(p)
+		p+=1
 	
-	# Define frequencia de demais palavras
-	lststopwords = stopwords()
-	for token in tokenizador(strtexto)[0]:
-		if token.isalpha() and token.lower() not in lststopwords:
-			if token in freqDP:
-				freqDP[token]+=1
+	while i < len(listaP):
+		if listaP[i]=='*':
+			del listaP[i]
+		else:
+			i+=1
+	# Fim remove
+	
+	stopw = stopwords()
+	
+	# Frequencia de palavras comuns
+	for i in listaP:
+		if tokens[i].lower() not in stopw and tokens[i].isalpha():
+			if tokens[i].lower() not in freqDP:
+				freqDP[tokens[i].lower()] = 1
 			else:
-				freqDP[token]=1
-	# Fim
+				freqDP[tokens[i].lower()]+=1
+	# Fim FPC
 	
-	# Tratamento de repetição
-	for palavra in freqDP:
-		for entidade in freqEntidade:
-			if palavra in entidade.split():
-				freqDP[palavra]-=freqEntidade[entidade]
-				
+	for i in PalavrasP:
+		if i not in freqEntidade:
+			freqEntidade[i]=1
+		else:
+			freqEntidade[i]+=1
 	
-	
+	for i in freqEntidade:
+		print(i,'-',freqEntidade[i])
+	for i in freqDP:
+		print(i,'-',freqDP[i])
 	arqFreq.close()
 	arquivo.close()
 	
@@ -466,7 +477,7 @@ def geratabFreq02(arqE,arqS):
 def stopwords():
 	stopwords=[]
 	
-	arquivo = open('/home/ifes/Documentos/Recursos/stopw.txt','rt')
+	arquivo = open('/home/danilo/Documentos/stopw.txt','rt')
 	
 	for i in arquivo.readlines():
 		stopwords.append(i[:-1])
@@ -478,7 +489,7 @@ def stopwords():
 
 def main():
 	
-	diretorio = '/home/ifes/Documentos/'
+	diretorio = '/home/danilo/Documentos/'
 	diretorio2 = '/home/danilo/Documentos/'
 	
 	geratabFreq02(diretorio+'arquivo1.txt',diretorio+'CopiaArquivo1.txt')
